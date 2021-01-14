@@ -9,24 +9,19 @@ app.use(bodyParser.json());
 app.use(morgan('tiny'));
 
 require('dotenv/config');
-
 const api = process.env.API_URL
-
 const port = 3000
 
-app.get(`${api}/products`, (req, res) => {
-    const product = {
-        id: 1,
-        name: 'Hair',
-        image: 'some_url',
-    }
-    res.send(product)
-})
+const productRouter = require('./routers/product');
+const categoryRouter = require('./routers/categories');
+const orderRouter = require('./routers/orders');
+const userRouter = require('./routers/users');
 
-app.post(`${api}/products`, (req, res) => {
-    const newProduct = req.body
-    res.send(newProduct)
-})
+//ROUTERS
+app.use(`${api}/products`, productRouter);
+app.use(`${api}/categories`, categoryRouter);
+app.use(`${api}/orders`, orderRouter);
+app.use(`${api}/users`, userRouter);
 
 mongoose.connect(process.env.CONNECTION_STRING, {
         useNewUrlParser: true,
