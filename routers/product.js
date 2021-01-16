@@ -42,7 +42,7 @@ router.post('/', async(req, res) => {
         category: req.body.category,
         rating: req.body.rating,
         numReviews: req.body.numReviews,
-        isFeatured: req.body.isFeatured,
+        isFeature: req.body.isFeature,
         price: req.body.price,
         countInStock: req.body.countInStock
     })
@@ -77,7 +77,7 @@ router.put('/:id', async(req, res) => {
         category: req.body.category,
         rating: req.body.rating,
         numReviews: req.body.numReviews,
-        isFeatured: req.body.isFeatured,
+        isFeature: req.body.isFeature,
         price: req.body.price,
         countInStock: req.body.countInStock
     }, { new: true })
@@ -123,6 +123,18 @@ router.get('/get/count', async(req, res) => {
     res.send({
         productCount: productCount
     })
+})
+
+router.get('/get/featured/:count', async(req, res) => {
+    const count = req.params.count ? req.params.count : 0;
+    const product = await Product.find({ isFeature: true }).limit(+count);
+
+    if (!product) {
+        res.status(500).json({
+            success: false
+        })
+    }
+    res.send(product)
 })
 
 module.exports = router
