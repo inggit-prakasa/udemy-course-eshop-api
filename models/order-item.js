@@ -1,11 +1,14 @@
 const mongoose = require('mongoose');
 
-const orderScheme = mongoose.Schema({
-    orderItems = [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'OrderItem',
+const orderItemSchema = mongoose.Schema({
+    quantity: {
+        type: Number,
         required: true
-    }],
+    },
+    product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product',
+    },
     shippingAddress1: {
         type: String,
         required: true
@@ -45,15 +48,6 @@ const orderScheme = mongoose.Schema({
         type: Date,
         default: Date.Now
     }
-
 })
 
-productScheme.virtual('id').get(function() {
-    return this._id.toHexString();
-});
-
-productScheme.set('toJSON', {
-    virtuals: true,
-});
-
-exports.Order = mongoose.model('Order', orderScheme)
+exports.OrderItem = mongoose.model('OrderItem', orderItemSchema)
