@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const orderScheme = mongoose.Schema({
-    orderItems = [{
+    orderItems: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'OrderItem',
         required: true
@@ -48,11 +48,11 @@ const orderScheme = mongoose.Schema({
 
 })
 
-productScheme.virtual('id').get(function() {
+orderScheme.virtual('id').get(function() {
     return this._id.toHexString();
 });
 
-productScheme.set('toJSON', {
+orderScheme.set('toJSON', {
     virtuals: true,
 });
 
