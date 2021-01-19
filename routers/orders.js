@@ -40,7 +40,15 @@ router.post('/', async(req, res) => {
     }))
 
     const orderItemIdsResolve = await orderItemIds;
-    console.log(orderItemIdsResolve);
+
+    const totalPrices = await Promise.all(orderItemIdsResolve.map(async(productId) => {
+        const item = await OrderItem.findById(productId).populate('product', 'price');
+        const totalPrice = item.product.price * item.quantity;
+
+        return totalPrice
+    }))
+
+    const totalPrice = totalPrices.reduce((a, b) => a + b, 0)
 
     let order = new Order({
         orderItems: orderItemIdsResolve,
@@ -51,7 +59,7 @@ router.post('/', async(req, res) => {
         country: req.body.country,
         phone: req.body.phone,
         status: req.body.status,
-        totalPrice: req.body.totalPrice,
+        totalPrice: totalPrice,
         user: req.body.user,
     })
 
@@ -62,6 +70,70 @@ router.post('/', async(req, res) => {
     }
 
     res.status(200).send(order);
+})
+
+router.put('/:id', async(req, res) => {
+    const order = await Order.findByIdAndUpdate(req.params.id, {
+        status: req.body.status
+    }, { new: true })
+
+    if (!order) {
+        return res.status(404).send("The Order not Created")
+    }
+
+    res.status(200).send(order);
+})
+
+router.delete('/:id', (req, res) => {
+    Order.findByIdAndRemove(req.params.id)
+        .then(async order => {
+            if (order) {
+                await order.orderItems.map(async orderItem => {
+                    await OrderItem.findByIdAndRemove(orderItem)
+                })
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Order is deleted"
+                })
+            } else {
+                return res.status(404).json({
+                    success: false,
+                    message: "Order not found"
+                })
+            }
+        })
+        .catch(err => {
+            return res.status(400).json({
+                success: false,
+                error: err
+            })
+        })
+})
+
+router.get('/get/totalsales', async(req, res) => {
+    const totalSales = await Order.aggregate([
+        { $group: { _id: null, totalsales: { $sum: '$totalPrice' } } }
+    ])
+
+    if (!totalSales) {
+        return res.status(400).send('The Order sales cannot be generated')
+    }
+
+    res.send({ totalsales: totalSales.pop().totalsales })
+})
+
+router.get('/get/count', async(req, res) => {
+    const orderCount = await Order.countDocuments((count) => count);
+
+    if (!orderCount) {
+        res.status(500).json({
+            success: false
+        })
+    }
+    res.send({
+        orderCount: orderCount
+    })
 })
 
 module.exports = router
