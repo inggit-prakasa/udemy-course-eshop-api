@@ -1,8 +1,35 @@
 const express = require('express');
 const { Category } = require('../models/category');
 const router = express.Router();
-const mongoose = require('mongoose');
 const { Product } = require('../models/product');
+const mongoose = require('mongoose');
+const multer = require('multer');
+
+const FILE_NAME_TYPE = {
+    'image/png': 'png',
+    'image/jpeg': 'jpeg',
+    'image/jpg': 'jpg'
+}
+
+var storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        const isValid = FILE_NAME_TYPE[file.mimetype]
+        let uploadError = new Error('Invalid Type');
+
+        if (isValid) {
+            uploadError = null
+        }
+        cb(uploadError, 'public/uploads')
+    },
+    filename: function(req, file, cb) {
+        const fileName = file.originalname.split(' ').join('-')
+        console.log(fileName);
+        const extension = FILE_NAME_TYPE[file.mimetype]
+        cb(null, `${fileName}-${Date.now()}.${extension}`)
+    }
+})
+
+var upload = multer({ storage: storage })
 
 router.get('/', async(req, res) => {
     let filter = {}
@@ -30,17 +57,21 @@ router.get('/:id', async(req, res) => {
     res.send(product)
 })
 
-router.post('/', async(req, res) => {
+router.post('/', upload.single('image'), async(req, res) => {
     let category = await Category.findById(req.body.category)
-
-
     if (!category) return res.status(400).send('Invalid Category')
+
+    const file = req.file;
+    if (!file) return res.status(400).send('No Image in request')
+
+    const fileName = req.file.filename
+    const basePath = `${req.protocol}://${req.get('host')}/public/uploads`;
 
     let product = new Product({
         name: req.body.name,
         description: req.body.description,
         richDescription: req.body.richDescription,
-        image: req.body.image,
+        image: `${basePath}/${fileName}`,
         images: req.body.images,
         brand: req.body.brand,
         category: req.body.category,
